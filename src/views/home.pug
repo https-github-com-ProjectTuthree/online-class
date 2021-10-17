@@ -10,11 +10,19 @@ html(lang="ko")
         header 
             h1 Tuthree onlineclass 
         main
-            div#myStream
-                video#myFace(autoplay,playsinline,width="400", height="400")
-                button#mute 음소거
-                button#camera 카메라 켜기
-                select#cameras
+            div#welcome
+                form
+                    input(placeholder="아이디", required, type="text")
+                    input(placeholder="비밀번호", required, type="password")
+                    button 입장하기
+            div#call
+                div#myStream
+                    video#myFace(autoplay,playsinline,width="400", height="400")
+                    button#mute 음소거
+                    button#camera 카메라 끄기
+                    select#cameras
+                    video#peerFace(autoplay,playsinline,width="400", height="400")
+
                     
         script(src="/socket.io/socket.io.js")
         script(src="/public/js/app.js")
