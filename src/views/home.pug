@@ -16,12 +16,18 @@ html(lang="ko")
                     input(placeholder="비밀번호", required, type="password")
                     button 입장하기
             div#call
+                div#myScreen
+                    button#screen 화면 공유
+                    //video#myScreenVideo(autoplay,playsinline, width="800", height="800")
+                    video#peerScreen(autoplay,playsinline, width="800", height="800")
                 div#myStream
-                    video#myFace(autoplay,playsinline,width="400", height="400")
-                    button#mute 음소거
-                    button#camera 카메라 끄기
-                    select#cameras
                     video#peerFace(autoplay,playsinline,width="400", height="400")
+                    video#myFace(autoplay,playsinline,width="200", height="200")
+                    button#mute 음소거 해제
+                    button#camera 카메라 켜기
+                    select#cameras
+                    
+                
 
                     
         script(src="/socket.io/socket.io.js")

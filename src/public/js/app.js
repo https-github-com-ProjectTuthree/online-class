@@ -9,6 +9,8 @@ const camerasSelect = document.getElementById("cameras");
 
 const welcome = document.getElementById("welcome");
 const call = document.getElementById("call");
+const screenBtn = document.getElementById("screen");
+const myScreenVideo = document.getElementById("myScreenVideo");
 
 call.hidden = true;
 
@@ -18,6 +20,22 @@ let cameraOff = true;
 let roomInfo;
 let check;
 let myPeerConnection;
+let myDataChannel;
+let myScreen;
+async function getScreen(){
+    try{
+        myScreen = await navigator.mediaDevices.getDisplayMedia({
+           video: true,
+           audio: true
+   });
+   console.log(myScreen);
+    
+    
+    }catch(e){
+       console.log(e);
+  }
+    
+} 
 
 async function getCameras(){
     try{
@@ -56,21 +74,67 @@ async function getMedia(deviceId){
         if(!deviceId){
             await getCameras();
         }
+        await getScreen();
+        myStream.getAudioTracks().forEach((track) => (track.enabled = !track.enabled));
+        myStream.getVideoTracks().forEach(track => (track.enabled = !track.enabled));
+        myScreen.getVideoTracks().forEach(track => myStream.addTrack(track));
+          
+        muted=false;
+        cameraOff=false;
+        
     }catch (e){
         console.log(e);
     }
 
 }
 
+
+/* async function handleSuccess() {
+    startButton.disabled = true;
+    myScreen = await navigator.mediaDevices.getDisplayMedia({
+                  audio: true,
+                   video: true
+           });
+    myScreenVideo.srcObject = myScreen;
+  
+    // demonstrates how to detect that the user has stopped
+    // sharing the screen via the browser UI.
+    myScreen.getVideoTracks()[0].addEventListener('ended', () => {
+      startButton.disabled = false;
+    });
+  }
+
+
+const startButton = document.getElementById('startButton');
+startButton.addEventListener('click', () => {
+    navigator.mediaDevices.getDisplayMedia({video: true})
+        .then(handleSuccess);
+  });
+if ((navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices)) {
+  startButton.disabled = false;
+}  */
+//try{
+//    myScreen = await navigator.mediaDevices.getDisplayMedia({
+//        audio: true,
+//        video: true
+//    }).then(function(stream){
+//    //success
+// }).catch(function(e){
+    //error;
+ //});
+
 getMedia();
+ function handleScreenClick(){
+    getScreen();
+} 
 
 function handleMuteClick(){
     myStream.getAudioTracks().forEach((track) => (track.enabled = !track.enabled));
     if(!muted){
-        muteBtn.innerText = "음소거 해제"
+        muteBtn.innerText = "음소거"
         muted = true;
     } else {
-        muteBtn.innerText = "음소거";
+        muteBtn.innerText = "음소거 해제";
         muted = false;
     }
 }
@@ -99,6 +163,7 @@ async function handleCameraChange() {
 muteBtn.addEventListener("click", handleMuteClick);
 cameraBtn.addEventListener("click", handleCameraClick);
 camerasSelect.addEventListener("input", handleCameraChange);
+screenBtn.addEventListener("click", handleScreenClick);
 
 //welcome form (join a room)
 
@@ -109,6 +174,8 @@ async function initCall(){
     welcome.hidden = true;
     call.hidden = false;
     await getMedia();
+    //await getScreen();
+    
     makeConnection();
 }
 
@@ -129,6 +196,8 @@ welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 //Socket Code
 
 socket.on("welcome", async() => {
+    myDataChannel = myPeerConnection.createDataChannel("chat");
+    myDataChannel.addEventListener=("message", console.log);
     console.log("someone joind");
     const offer = await myPeerConnection.createOffer();
     myPeerConnection.setLocalDescription(offer);
@@ -137,6 +206,10 @@ socket.on("welcome", async() => {
 });
 
 socket.on("offer", async(offer) => {
+    myPeerConnection.addEventListener("datachannel", (event) => {
+        myDataChannel = event.channel;
+        myDataChannel.addEventListener("message", console.log);
+    });
     myPeerConnection.setRemoteDescription(offer);
     const answer = await myPeerConnection.createAnswer();
     myPeerConnection.setLocalDescription(answer);
@@ -171,9 +244,20 @@ function makeConnection(){
             },
         ],
     });
+    
+    console.log("getTrack");
+    console.log(myStream.getTracks());
+    console.log("myStream");
+    console.log(myStream);
+    //console.log("myScreen");
+    //console.log(myScreen);
+    //console.log("myScreentrack");
+    //console.log(myScreen.getTracks());
     myPeerConnection.addEventListener("icecandidate", handleIce);
     myPeerConnection.addEventListener("addstream", handleAddStream);
     myStream.getTracks().forEach((track) => myPeerConnection.addTrack(track, myStream));
+    //myScreen.getVideoTracks().forEach(track => myPeerConnection.addTrack(track, myScreen));
+
 }
 
 function handleIce(data){
@@ -183,5 +267,14 @@ function handleIce(data){
 
 function handleAddStream(data){
     const peerFace = document.getElementById("peerFace");
+    const peerScreen = document.getElementById("peerScreen");
+    console.log("data");
+    console.log(data.stream.getTracks());
+    console.log("data");
     peerFace.srcObject = data.stream;
+    //peerScreen.srcObject=data.stream;
+    let newStream = new MediaStream();
+    newStream.addTrack(data.stream.getTracks()[2]);
+    console.log(newStream.getTracks());
+    peerScreen.srcObject= newStream;
 }
